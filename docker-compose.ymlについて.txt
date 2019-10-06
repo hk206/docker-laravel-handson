@@ -1,0 +1,40 @@
+Docker-compose.yml
+
+アプリケーションを動かすための処理を記述しているファイルです。
+
+version: '2'  # docker-composeで使用するバージョンを定義しています。
+services:  # アプリケーションを動かすための各要素をServiceと読んでいます。
+  db: # サービス名 databaseを指す
+  # db については、DockerHubにアップされている既存のDockerImageを使うことになり、Railsのようなウェブアプリケーションについては、ディレクトリも指定します。
+  # ComposeFile内の各サービス名は、わかりやすければなんでもいいです。
+  # なので、dbじゃなくてもdatabaseのように表記してもOK。
+    image: mysql:5.7   #docker hubからのimage. :の後はバージョンで最新版ならlatest
+    ports: # DBのDockerImageを立ち上げる際のポート番号
+      - "6603:3306" # 6603のポートがきたら、3306のポートを使う
+
+    environment: # DBについての環境変数設定(パスワードなど)
+      - MYSQL_ALLOW_EMPTY_PASSWORD=true
+      - MYSQL_DATABASE=dev_gizlog
+      - LANG=C.UTF-8
+    volumes: # マウントする設定ファイルのパスを指定(mysqlのconfなど)。
+      - db:/var/lib/mysql # /var/lib/mysqlを指定して実行
+    command: mysqld --sql-mode=NO_ENGINE_SUBSTITUTION --character-set-server=utf8 --collation-server=utf8_unicode_ci #もとのコマンドをoverrideする
+
+  web: # サービス名 webアプリケーションを指す
+    image: arbiedev/php-nginx:7.1
+    working_dir: /var/www/dev_gizlog  # docker-compose exec web bashでコンテナ内入れる。で、/var/www/dev_gizlogにつく。
+    ports:
+      - "8080:80"
+    volumes:
+      - ./www:/var/www #Composefileからみた相対パスでwwwが呼び出されたら、/var/wwwを指定して実行。
+
+volumes:
+  db:
+
+  # docker-composeとは、
+  # 複数のコンテナから成るサービスを構築・実行する手順を自動的にし、管理を容易にする機能です。
+
+# docker-compose手順
+# それぞれのコンテナのDockerfileを作成(既にあるイメージを使う場合は不要)
+# docker-compose.ymlを作成し、それぞれ独立したコンテナの起動定義を行う(場合によっては構築定義も含まれる)
+# "docker-compose up" コマンドを実行してdocker-compose.yml で定義したコンテナを開始
